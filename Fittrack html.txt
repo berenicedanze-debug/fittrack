@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitTrack Journal - Suivi & Planification Sportive</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            accent: '#10b981'
+                        },
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b',
+                        darkborder: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js for responsive visual charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-darkbg text-slate-100">
+
+    <!-- Navigation Header -->
+    <header class="bg-darkcard border-b border-darkborder sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Title -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid font-bold fa-bolt text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wide bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">FitTrack <span class="text-brand-500">Journal</span></h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">Carnet de bord & Planificateur de performances</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 bg-slate-900/60 p-1.5 rounded-xl border border-darkborder">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-white bg-brand-600 shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie"></i> Tableau de bord
+                    </button>
+                    <button onclick="switchTab('logs')" id="nav-logs" class="nav-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check"></i> Mes Séances
+                    </button>
+                    <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days"></i> Planificateur
+                    </button>
+                    <button onclick="switchTab('weight')" id="nav-weight" class="nav-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
+                        <i class="fa-solid fa-weight-scale"></i> Suivi Poids
+                    </button>
+                </nav>
+
+                <!-- Quick Action Button -->
+                <div class="flex items-center gap-2">
+                    <button onclick="openLogModal()" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-600 text-white px-4 py-2.5 rounded-xl font-medium text-sm shadow-md hover:shadow-brand-500/20 transition-all duration-200 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nouvelle Séance</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Sub-Bar -->
+        <div class="md:hidden border-t border-darkborder bg-slate-900/80 px-2 py-2 flex justify-around">
+            <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn text-xs flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-brand-500 font-medium">
+                <i class="fa-solid fa-chart-pie text-base"></i> Dashboard
+            </button>
+            <button onclick="switchTab('logs')" id="mobile-nav-logs" class="mobile-nav-btn text-xs flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-400">
+                <i class="fa-solid fa-list-check text-base"></i> Séances
+            </button>
+            <button onclick="switchTab('calendar')" id="mobile-nav-calendar" class="mobile-nav-btn text-xs flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-400">
+                <i class="fa-solid fa-calendar-days text-base"></i> Planning
+            </button>
+            <button onclick="switchTab('weight')" id="mobile-nav-weight" class="mobile-nav-btn text-xs flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-400">
+                <i class="fa-solid fa-weight-scale text-base"></i> Poids
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= SECTION 1: DASHBOARD ================= -->
+        <div id="tab-dashboard" class="tab-content space-y-6">
+            
+            <!-- Welcome Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-darkcard via-slate-800 to-darkcard p-6 rounded-2xl border border-darkborder shadow-sm">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        Bonjour, Athlète ! <span class="animate-bounce">👋</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Voici le récapitulatif de vos performances et objectifs récents.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-amber-500"></i> Série : <strong class="text-white" id="streak-count">4 jours</strong>
+                    </span>
+                    <button onclick="resetDemoData()" class="text-xs text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-900/50 bg-slate-900/50 px-3 py-1.5 rounded-lg transition-colors" title="Réinitialiser les données de démo">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Total Distance -->
+                <div class="bg-darkcard border border-darkborder p-5 rounded-2xl shadow-sm hover:border-brand-500/50 transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Distance Totale</span>
+                        <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                            <i class="fa-solid fa-route text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white" id="kpi-distance">0</span>
+                        <span class="text-sm font-medium text-slate-400">km</span>
+                    </div>
+                    <p class="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> <span id="kpi-distance-sub">Course & Natation</span>
+                    </p>
+                </div>
+
+                <!-- Total Calories Burned -->
+                <div class="bg-darkcard border border-darkborder p-5 rounded-2xl shadow-sm hover:border-brand-500/50 transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Calories Brûlées</span>
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                            <i class="fa-solid fa-fire-flame-curved text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white" id="kpi-calories">0</span>
+                        <span class="text-sm font-medium text-slate-400">kcal</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Estimation sur toutes les activités</p>
+                </div>
+
+                <!-- Total Workouts -->
+                <div class="bg-darkcard border border-darkborder p-5 rounded-2xl shadow-sm hover:border-brand-500/50 transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Séances Complétées</span>
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                            <i class="fa-solid fa-dumbbell text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white" id="kpi-workouts">0</span>
+                        <span class="text-sm font-medium text-slate-400">sessions</span>
+                    </div>
+                    <p class="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-check"></i> <span id="kpi-workouts-sub">Ce mois-ci</span>
+                    </p>
+                </div>
+
+                <!-- Weight Tracking KPI -->
+                <div class="bg-darkcard border border-darkborder p-5 rounded-2xl shadow-sm hover:border-brand-500/50 transition-all cursor-pointer" onclick="switchTab('weight')">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Poids Actuel</span>
+                        <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                            <i class="fa-solid fa-weight-scale text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white" id="kpi-weight">--</span>
+                        <span class="text-sm font-medium text-slate-400">kg</span>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between text-xs">
+                        <span class="text-slate-400">Objectif: <strong class="text-white" id="kpi-weight-target">-- kg</strong></span>
+                        <span id="kpi-weight-diff" class="font-medium text-emerald-400">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Activity Breakdown Chart -->
+                <div class="lg:col-span-2 bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-brand-500"></i> Répartition par Discipline
+                        </h3>
+                        <span class="text-xs text-slate-400">Volume horaire total</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="disciplineChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Quick Discipline Stats Progress Cards -->
+                <div class="bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-emerald-400"></i> Objectifs Hebdo
+                        </h3>
+                        <div class="space-y-4" id="weekly-goals-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    <button onclick="switchTab('calendar')" class="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-colors border border-slate-700 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> Modifier les objectifs
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Dernières Séances Enregistrées
+                    </h3>
+                    <button onclick="switchTab('logs')" class="text-xs text-brand-500 hover:underline font-medium">Voir tout →</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="text-xs uppercase bg-slate-900/60 text-slate-400 border-b border-darkborder">
+                            <tr>
+                                <th class="p-3">Discipline</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Durée</th>
+                                <th class="p-3">Détails / Performance</th>
+                                <th class="p-3">Calories</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-recent-table" class="divide-y divide-slate-800">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= SECTION 2: WORKOUT LOGS ================= -->
+        <div id="tab-logs" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Journal des Séances</h2>
+                    <p class="text-slate-400 text-sm">Consultez et filtrez l'historique complet de vos entraînements.</p>
+                </div>
+                <button onclick="openLogModal()" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-plus"></i> Ajouter une séance
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-4 flex flex-wrap gap-3 items-center justify-between">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold uppercase text-slate-400 mr-1">Filtrer par:</span>
+                    <button onclick="filterLogs('all')" class="log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-600 text-white" data-filter="all">Tous</button>
+                    <button onclick="filterLogs('Course')" class="log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Course">Course</button>
+                    <button onclick="filterLogs('Natation')" class="log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Natation">Natation</button>
+                    <button onclick="filterLogs('Tennis')" class="log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Tennis">Tennis</button>
+                    <button onclick="filterLogs('Pilates')" class="log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Pilates">Pilates</button>
+                    <button onclick="filterLogs('Musculation')" class="log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700" data-filter="Musculation">Musculation</button>
+                </div>
+                <div class="text-xs text-slate-400">
+                    Total: <strong id="logs-count-badge" class="text-white">0</strong> séances
+                </div>
+            </div>
+
+            <!-- Logs List Grid -->
+            <div id="logs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Cards injected by JS -->
+            </div>
+        </div>
+
+        <!-- ================= SECTION 3: CALENDAR & PLANNING ================= -->
+        <div id="tab-calendar" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Planificateur & Planning</h2>
+                    <p class="text-slate-400 text-sm">Programmez vos séances à venir et fixez vos objectifs sportifs.</p>
+                </div>
+                <button onclick="openScheduleModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-calendar-plus"></i> Programmer une séance
+                </button>
+            </div>
+
+            <!-- Calendar Container -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm">
+                <!-- Month Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2" id="calendar-month-year">
+                        Octobre 2026
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeMonth(-1)" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button onclick="changeMonth(1)" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Calendar Days Header -->
+                <div class="grid grid-cols-7 text-center font-semibold text-xs text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-2">
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mer</div>
+                    <div>Jeu</div>
+                    <div>Ven</div>
+                    <div>Sam</div>
+                    <div>Dim</div>
+                </div>
+
+                <!-- Calendar Grid Days -->
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2">
+                    <!-- Days Injected by JS -->
+                </div>
+            </div>
+
+            <!-- Scheduled Upcoming List -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-emerald-400"></i> Séances Programmées Prochainement
+                </h3>
+                <div id="scheduled-list" class="space-y-3">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 4: WEIGHT TRACKER ================= -->
+        <div id="tab-weight" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Suivi de Poids & Métriques</h2>
+                    <p class="text-slate-400 text-sm">Suivez votre évolution physique au fil du temps.</p>
+                </div>
+                <button onclick="openWeightModal()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-weight-scale"></i> Enregistrer une pesée
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Weight Progress Chart -->
+                <div class="lg:col-span-2 bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm">
+                    <h3 class="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-purple-400"></i> Courbe d'Évolution du Poids
+                    </h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Target Weight & Goal Card -->
+                <div class="bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-flag-checkered text-amber-400"></i> Mon Objectif de Poids
+                        </h3>
+                        <form id="target-weight-form" onsubmit="updateTargetWeight(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Objectif Cible (kg)</label>
+                                <input type="number" step="0.1" id="input-target-weight" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500" placeholder="Ex: 72.0" required>
+                            </div>
+                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl text-xs font-semibold transition-colors border border-slate-700">
+                                Mettre à jour l'objectif
+                            </button>
+                        </form>
+
+                        <div class="mt-6 p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">Dernier poids mesuré:</span>
+                                <span class="font-semibold text-white" id="weight-last-value">-- kg</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">Ecart avec l'objectif:</span>
+                                <span class="font-semibold" id="weight-gap-value">-- kg</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-history text-slate-400"></i> Historique des Pesées
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="text-xs uppercase bg-slate-900/60 text-slate-400 border-b border-darkborder">
+                            <tr>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Poids (kg)</th>
+                                <th class="p-3">Notes</th>
+                                <th class="p-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weight-history-table" class="divide-y divide-slate-800">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- LOG WORKOUT MODAL -->
+    <div id="modal-workout" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+            <button onclick="closeLogModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-circle-plus text-brand-500"></i> Enregistrer une Séance
+            </h3>
+
+            <form id="workout-form" onsubmit="handleSaveWorkout(event)" class="space-y-4">
+                <input type="hidden" id="form-workout-id">
+
+                <!-- Discipline Selector -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Discipline *</label>
+                    <select id="form-discipline" onchange="toggleDisciplineFields()" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500" required>
+                        <option value="Course">🏃‍♂️ Course à pied</option>
+                        <option value="Natation">🏊‍♂️ Natation</option>
+                        <option value="Tennis">🎾 Tennis</option>
+                        <option value="Pilates">🧘‍♀️ Pilates / Yoga</option>
+                        <option value="Musculation">🏋️‍♂️ Musculation / Fitness</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Date *</label>
+                        <input type="date" id="form-date" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Durée (minutes) *</label>
+                        <input type="number" id="form-duration" min="1" placeholder="Ex: 45" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500" required>
+                    </div>
+                </div>
+
+                <!-- Dynamic Discipline Specific Fields -->
+                <div id="dynamic-discipline-fields" class="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-3">
+                    <!-- Injected dynamically via JS -->
+                </div>
+
+                <!-- Calories & RPE -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Calories estimées (kcal)</label>
+                        <input type="number" id="form-calories" placeholder="Ex: 350" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Ressenti / Énergie</label>
+                        <select id="form-feeling" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                            <option value="🔥 Excellent">🔥 Excellent</option>
+                            <option value="👍 Bon">👍 Bon</option>
+                            <option value="😐 Moyen">😐 Moyen</option>
+                            <option value="😮‍💨 Difficile">😮‍💨 Difficile</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Commentaires</label>
+                    <textarea id="form-notes" rows="2" placeholder="Sensations, parcours, morceaux de séances..." class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-xs"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeLogModal()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-medium">Annuler</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-md">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCHEDULE WORKOUT MODAL -->
+    <div id="modal-schedule" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeScheduleModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-plus text-emerald-500"></i> Programmer une séance
+            </h3>
+
+            <form id="schedule-form" onsubmit="handleSaveSchedule(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Discipline *</label>
+                    <select id="sched-discipline" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                        <option value="Course">🏃‍♂️ Course à pied</option>
+                        <option value="Natation">🏊‍♂️ Natation</option>
+                        <option value="Tennis">🎾 Tennis</option>
+                        <option value="Pilates">🧘‍♀️ Pilates / Yoga</option>
+                        <option value="Musculation">🏋️‍♂️ Musculation / Fitness</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Date prévue *</label>
+                        <input type="date" id="sched-date" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Objectif Durée (min)</label>
+                        <input type="number" id="sched-duration" placeholder="Ex: 60" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Objectif spécifique / Note</label>
+                    <input type="text" id="sched-title" placeholder="Ex: VMA 10x400m ou Match amical" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-xs">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-medium">Annuler</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md">Programmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- WEIGHT LOG MODAL -->
+    <div id="modal-weight" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <button onclick="closeWeightModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-weight-scale text-purple-500"></i> Nouvelle Pesée
+            </h3>
+
+            <form id="weight-form" onsubmit="handleSaveWeight(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Date *</label>
+                    <input type="date" id="weight-date" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Poids (kg) *</label>
+                    <input type="number" step="0.1" id="weight-val" placeholder="Ex: 74.5" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Note (Optionnel)</label>
+                    <input type="text" id="weight-note" placeholder="Ex: À jeun au réveil" class="w-full bg-slate-900 border border-darkborder rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 text-xs">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeWeightModal()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-medium">Annuler</button>
+                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // Sample Initial Data for Immediate Interactive Experience
+        const INITIAL_WORKOUTS = [
+            { id: '1', discipline: 'Course', date: '2026-10-01', duration: 45, distance: 8.5, pace: '5:17', elevation: 110, calories: 520, feeling: '🔥 Excellent', notes: 'Sortie fondamentale dynamique en sous-bois.' },
+            { id: '2', discipline: 'Natation', date: '2026-10-02', duration: 50, distance: 2.2, laps: 88, stroke: 'Crawl', calories: 450, feeling: '👍 Bon', notes: 'Séries d\'éducatifs et accélérations 50m.' },
+            { id: '3', discipline: 'Tennis', date: '2026-10-03', duration: 90, matchScore: '6-4, 7-5', intensity: 'Haute', calories: 710, feeling: '🔥 Excellent', notes: 'Victoire serrée, bon revers long de ligne.' },
+            { id: '4', discipline: 'Pilates', date: '2026-10-04', duration: 40, focusArea: 'Core & Dos', intensity: 'Modérée', calories: 210, feeling: '👍 Bon', notes: 'Renforcement de la sangle abdominale.' },
+            { id: '5', discipline: 'Musculation', date: '2026-10-04', duration: 60, exercises: 'Squats, Soulevé de terre, Fentes', setsReps: '4x10 @ 80kg', calories: 380, feeling: '😮‍💨 Difficile', notes: 'Séance Bas du corps intense.' }
+        ];
+
+        const INITIAL_SCHEDULE = [
+            { id: 's1', discipline: 'Course', date: '2026-10-06', duration: 50, title: 'Fractionné 8x400m', completed: false },
+            { id: 's2', discipline: 'Natation', date: '2026-10-08', duration: 45, title: 'Séance endurance 2000m', completed: false },
+            { id: 's3', discipline: 'Tennis', date: '2026-10-10', duration: 60, title: 'Entraînement service & coup droit', completed: false }
+        ];
+
+        const INITIAL_WEIGHT_LOGS = [
+            { id: 'w1', date: '2026-09-15', weight: 76.5, note: 'Début du programme' },
+            { id: 'w2', date: '2026-09-22', weight: 75.8, note: 'Bonne régularité' },
+            { id: 'w3', date: '2026-09-29', weight: 75.2, note: 'Après weekend sportif' },
+            { id: 'w4', date: '2026-10-04', weight: 74.6, note: 'Pesée du matin' }
+        ];
+
+        // Global State Manager
+        let workouts = JSON.parse(localStorage.getItem('fittrack_workouts')) || INITIAL_WORKOUTS;
+        let schedule = JSON.parse(localStorage.getItem('fittrack_schedule')) || INITIAL_SCHEDULE;
+        let weightLogs = JSON.parse(localStorage.getItem('fittrack_weight')) || INITIAL_WEIGHT_LOGS;
+        let targetWeight = parseFloat(localStorage.getItem('fittrack_target_weight')) || 72.0;
+
+        let currentCalendarDate = new Date(2026, 9, 1); // Oct 2026
+        let disciplineChartInstance = null;
+        let weightChartInstance = null;
+        let activeLogFilter = 'all';
+
+        // App Initialization
+        window.onload = function() {
+            saveState();
+            setTodayDates();
+            renderDashboard();
+            renderLogs();
+            renderCalendar();
+            renderWeightSection();
+            toggleDisciplineFields();
+        };
+
+        function saveState() {
+            localStorage.setItem('fittrack_workouts', JSON.stringify(workouts));
+            localStorage.setItem('fittrack_schedule', JSON.stringify(schedule));
+            localStorage.setItem('fittrack_weight', JSON.stringify(weightLogs));
+            localStorage.setItem('fittrack_target_weight', targetWeight.toString());
+        }
+
+        function resetDemoData() {
+            if(confirm("Réinitialiser toutes les données aux exemples par défaut ?")) {
+                workouts = [...INITIAL_WORKOUTS];
+                schedule = [...INITIAL_SCHEDULE];
+                weightLogs = [...INITIAL_WEIGHT_LOGS];
+                targetWeight = 72.0;
+                saveState();
+                location.reload();
+            }
+        }
+
+        function setTodayDates() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('form-date').value = todayStr;
+            document.getElementById('sched-date').value = todayStr;
+            document.getElementById('weight-date').value = todayStr;
+        }
+
+        // Navigation Controller
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Update desktop active styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-brand-600', 'text-white');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            // Update mobile styles
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.classList.remove('text-brand-500', 'font-medium');
+                btn.classList.add('text-slate-400');
+            });
+            const activeMobileNav = document.getElementById(`mobile-nav-${tabId}`);
+            if (activeMobileNav) {
+                activeMobileNav.classList.add('text-brand-500', 'font-medium');
+                activeMobileNav.classList.remove('text-slate-400');
+            }
+
+            // Refresh charts if entering view
+            if (tabId === 'dashboard') renderDashboardCharts();
+            if (tabId === 'weight') renderWeightChart();
+        }
+
+        // ================= DASHBOARD CONTROLLER =================
+        function renderDashboard() {
+            // Compute KPI Metrics
+            let totalDist = 0;
+            let totalCals = 0;
+            let totalCount = workouts.length;
+
+            workouts.forEach(w => {
+                if (w.distance) totalDist += parseFloat(w.distance);
+                if (w.calories) totalCals += parseInt(w.calories);
+            });
+
+            document.getElementById('kpi-distance').innerText = totalDist.toFixed(1);
+            document.getElementById('kpi-calories').innerText = totalCals.toLocaleString();
+            document.getElementById('kpi-workouts').innerText = totalCount;
+
+            // Weight KPI
+            const latestWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : '--';
+            document.getElementById('kpi-weight').innerText = latestWeight;
+            document.getElementById('kpi-weight-target').innerText = `${targetWeight} kg`;
+
+            if (latestWeight !== '--') {
+                const diff = (latestWeight - targetWeight).toFixed(1);
+                const diffEl = document.getElementById('kpi-weight-diff');
+                if (diff > 0) {
+                    diffEl.innerText = `+${diff} kg de l'objectif`;
+                    diffEl.className = 'font-medium text-amber-400';
+                } else {
+                    diffEl.innerText = `${diff} kg sous l'objectif`;
+                    diffEl.className = 'font-medium text-emerald-400';
+                }
+            }
+
+            // Render Recent Feed Table (top 4)
+            const recentTable = document.getElementById('dashboard-recent-table');
+            recentTable.innerHTML = '';
+            
+            const sorted = [...workouts].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 4);
+            
+            sorted.forEach(w => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white flex items-center gap-2">
+                        ${getDisciplineIcon(w.discipline)} ${w.discipline}
+                    </td>
+                    <td class="p-3 text-slate-400 text-xs">${formatDate(w.date)}</td>
+                    <td class="p-3 text-slate-300 font-medium">${w.duration} min</td>
+                    <td class="p-3 text-xs text-slate-400">${getWorkoutDetailsSummary(w)}</td>
+                    <td class="p-3 text-amber-400 text-xs font-semibold">${w.calories ? w.calories + ' kcal' : '-'}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteWorkout('${w.id}')" class="text-slate-500 hover:text-rose-400 text-xs px-2 py-1">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                recentTable.appendChild(tr);
+            });
+
+            renderWeeklyGoals();
+            renderDashboardCharts();
+        }
+
+        function getWorkoutDetailsSummary(w) {
+            if (w.discipline === 'Course') return `Dist: ${w.distance} km | Allure: ${w.pace || '-'}`;
+            if (w.discipline === 'Natation') return `Dist: ${w.distance || '-'} km | Style: ${w.stroke || '-'}`;
+            if (w.discipline === 'Tennis') return `Score: ${w.matchScore || 'Entraînement'}`;
+            if (w.discipline === 'Pilates') return `Cible: ${w.focusArea || 'Général'}`;
+            if (w.discipline === 'Musculation') return `Exercices: ${w.exercises || 'Polyarticulaire'}`;
+            return w.notes || 'Séance enregistrée';
+        }
+
+        function renderWeeklyGoals() {
+            const goalsList = document.getElementById('weekly-goals-list');
+            goalsList.innerHTML = `
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300 font-medium">Course à pied (20 km)</span>
+                        <span class="text-brand-500 font-bold">8.5 / 20 km</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-brand-500 h-full rounded-full" style="width: 42.5%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300 font-medium">Nombre de séances (4 / sem)</span>
+                        <span class="text-emerald-400 font-bold">3 / 4</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-emerald-400 h-full rounded-full" style="width: 75%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300 font-medium">Natation (3 km)</span>
+                        <span class="text-cyan-400 font-bold">2.2 / 3 km</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-cyan-400 h-full rounded-full" style="width: 73%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboardCharts() {
+            const ctx = document.getElementById('disciplineChart');
+            if(!ctx) return;
+
+            // Group minutes by discipline
+            const totals = { Course: 0, Natation: 0, Tennis: 0, Pilates: 0, Musculation: 0 };
+            workouts.forEach(w => {
+                if (totals[w.discipline] !== undefined) {
+                    totals[w.discipline] += parseInt(w.duration || 0);
+                }
+            });
+
+            if (disciplineChartInstance) disciplineChartInstance.destroy();
+
+            disciplineChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Course', 'Natation', 'Tennis', 'Pilates', 'Musculation'],
+                    datasets: [{
+                        label: 'Durée (minutes)',
+                        data: [totals.Course, totals.Natation, totals.Tennis, totals.Pilates, totals.Musculation],
+                        backgroundColor: ['#3b82f6', '#06b6d4', '#eab308', '#ec4899', '#10b981'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ================= WORKOUT LOGS CONTROLLER =================
+        function renderLogs() {
+            const container = document.getElementById('logs-grid');
+            container.innerHTML = '';
+
+            const filtered = workouts.filter(w => activeLogFilter === 'all' || w.discipline === activeLogFilter);
+            document.getElementById('logs-count-badge').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500">Aucune séance trouvée pour cette catégorie.</div>`;
+                return;
+            }
+
+            filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(w => {
+                const card = document.createElement('div');
+                card.className = "bg-darkcard border border-darkborder rounded-2xl p-5 shadow-sm hover:border-slate-700 transition-all flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-white flex items-center gap-1.5">
+                                ${getDisciplineIcon(w.discipline)} ${w.discipline}
+                            </span>
+                            <span class="text-xs text-slate-400">${formatDate(w.date)}</span>
+                        </div>
+                        <div class="text-lg font-bold text-white mb-2">${w.duration} min</div>
+                        <div class="text-xs text-slate-300 space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 mb-3">
+                            ${getWorkoutDetailsCard(w)}
+                        </div>
+                        ${w.notes ? `<p class="text-xs text-slate-400 italic mb-3">"${w.notes}"</p>` : ''}
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800 pt-3 text-xs">
+                        <span class="text-amber-400 font-medium"><i class="fa-solid fa-fire text-amber-500 mr-1"></i>${w.calories ? w.calories + ' kcal' : '-'}</span>
+                        <span class="text-slate-400">${w.feeling || ''}</span>
+                        <button onclick="deleteWorkout('${w.id}')" class="text-rose-400 hover:text-rose-300 transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterLogs(discipline) {
+            activeLogFilter = discipline;
+            document.querySelectorAll('.log-filter-btn').forEach(btn => {
+                if (btn.dataset.filter === discipline) {
+                    btn.className = "log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-600 text-white";
+                } else {
+                    btn.className = "log-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700";
+                }
+            });
+            renderLogs();
+        }
+
+        function getWorkoutDetailsCard(w) {
+            if (w.discipline === 'Course') return `<div>Distance: <strong>${w.distance} km</strong></div><div>Allure: <strong>${w.pace || '-'} min/km</strong></div><div>Dénivelé: <strong>${w.elevation || 0} m</strong></div>`;
+            if (w.discipline === 'Natation') return `<div>Distance: <strong>${w.distance} km</strong></div><div>Longueurs: <strong>${w.laps || '-'}</strong></div><div>Nage: <strong>${w.stroke || 'Crawl'}</strong></div>`;
+            if (w.discipline === 'Tennis') return `<div>Score / Match: <strong>${w.matchScore || 'Entraînement'}</strong></div><div>Intensité: <strong>${w.intensity || 'Moyenne'}</strong></div>`;
+            if (w.discipline === 'Pilates') return `<div>Cible: <strong>${w.focusArea || 'Full Body'}</strong></div><div>Intensité: <strong>${w.intensity || 'Modérée'}</strong></div>`;
+            if (w.discipline === 'Musculation') return `<div>Exercices: <strong>${w.exercises || '-'}</strong></div><div>Séries/Rép: <strong>${w.setsReps || '-'}</strong></div>`;
+            return '';
+        }
+
+        // Dynamic Form Logic for Disciplines
+        function toggleDisciplineFields() {
+            const disc = document.getElementById('form-discipline').value;
+            const container = document.getElementById('dynamic-discipline-fields');
+            container.innerHTML = '';
+
+            if (disc === 'Course') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Distance (km)</label>
+                            <input type="number" step="0.01" id="form-distance" placeholder="Ex: 10.5" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Allure (min/km)</label>
+                            <input type="text" id="form-pace" placeholder="Ex: 5:15" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Dénivelé (m)</label>
+                            <input type="number" id="form-elevation" placeholder="Ex: 120" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                    </div>
+                `;
+            } else if (disc === 'Natation') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Distance (km)</label>
+                            <input type="number" step="0.05" id="form-distance" placeholder="Ex: 1.5" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Longueurs</label>
+                            <input type="number" id="form-laps" placeholder="Ex: 60" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Type de Nage</label>
+                            <input type="text" id="form-stroke" placeholder="Ex: Crawl" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                    </div>
+                `;
+            } else if (disc === 'Tennis') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Score / Sets</label>
+                            <input type="text" id="form-score" placeholder="Ex: 6-3, 6-4" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Intensité</label>
+                            <select id="form-intensity" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                                <option value="Haute">Haute (Match)</option>
+                                <option value="Modérée">Modérée (Entraînement)</option>
+                                <option value="Faible">Faible (Échauffement)</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else if (disc === 'Pilates') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Zone Ciblée</label>
+                            <input type="text" id="form-focus" placeholder="Ex: Core / Sangle abdominale" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Intensité</label>
+                            <select id="form-intensity" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                                <option value="Modérée">Modérée</option>
+                                <option value="Haute">Intense</option>
+                                <option value="Douce">Douce / Étirements</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else if (disc === 'Musculation') {
+                container.innerHTML = `
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Exercices clés</label>
+                            <input type="text" id="form-exercises" placeholder="Ex: Bench Press, Dips, Épaules" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Séries / Charges</label>
+                            <input type="text" id="form-setsreps" placeholder="Ex: 4x10 @ 70kg" class="w-full bg-slate-900 border border-darkborder rounded-lg px-2 py-1.5 text-xs text-white">
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function handleSaveWorkout(e) {
+            e.preventDefault();
+            const disc = document.getElementById('form-discipline').value;
+            const newWorkout = {
+                id: Date.now().toString(),
+                discipline: disc,
+                date: document.getElementById('form-date').value,
+                duration: parseInt(document.getElementById('form-duration').value),
+                calories: parseInt(document.getElementById('form-calories').value || 0),
+                feeling: document.getElementById('form-feeling').value,
+                notes: document.getElementById('form-notes').value
+            };
+
+            if (disc === 'Course') {
+                newWorkout.distance = document.getElementById('form-distance')?.value;
+                newWorkout.pace = document.getElementById('form-pace')?.value;
+                newWorkout.elevation = document.getElementById('form-elevation')?.value;
+            } else if (disc === 'Natation') {
+                newWorkout.distance = document.getElementById('form-distance')?.value;
+                newWorkout.laps = document.getElementById('form-laps')?.value;
+                newWorkout.stroke = document.getElementById('form-stroke')?.value;
+            } else if (disc === 'Tennis') {
+                newWorkout.matchScore = document.getElementById('form-score')?.value;
+                newWorkout.intensity = document.getElementById('form-intensity')?.value;
+            } else if (disc === 'Pilates') {
+                newWorkout.focusArea = document.getElementById('form-focus')?.value;
+                newWorkout.intensity = document.getElementById('form-intensity')?.value;
+            } else if (disc === 'Musculation') {
+                newWorkout.exercises = document.getElementById('form-exercises')?.value;
+                newWorkout.setsReps = document.getElementById('form-setsreps')?.value;
+            }
+
+            workouts.unshift(newWorkout);
+            saveState();
+            closeLogModal();
+            renderDashboard();
+            renderLogs();
+            renderCalendar();
+        }
+
+        function deleteWorkout(id) {
+            if(confirm("Supprimer cette séance ?")) {
+                workouts = workouts.filter(w => w.id !== id);
+                saveState();
+                renderDashboard();
+                renderLogs();
+                renderCalendar();
+            }
+        }
+
+        // ================= CALENDAR & SCHEDULE CONTROLLER =================
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const firstDayIndex = new Date(year, month, 1).getDay() || 7; // Monday = 1
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            // Empty cells for alignment
+            for (let i = 1; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "h-20 bg-slate-900/20 rounded-xl border border-slate-900";
+                grid.appendChild(emptyCell);
+            }
+
+            // Days cells
+            for (let day = 1; day <= totalDays; day++) {
+                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              
+                // Find logged or scheduled events for this day
+                const dayLogs = workouts.filter(w => w.date === dayStr);
+                const daySched = schedule.filter(s => s.date === dayStr);
+
+                const cell = document.createElement('div');
+                cell.className = "h-20 sm:h-24 bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-xl p-1 sm:p-2 flex flex-col justify-between overflow-hidden cursor-pointer transition-all";
+                cell.onclick = () => quickAddScheduleForDate(dayStr);
+
+                let badges = '';
+                dayLogs.forEach(l => {
+                    badges += `<div class="text-[10px] bg-brand-600/80 text-white rounded px-1 py-0.5 truncate flex items-center gap-1 mb-0.5" title="${l.discipline}">
+                        ${getDisciplineIcon(l.discipline)} <span class="hidden sm:inline">${l.discipline}</span>
+                    </div>`;
+                });
+
+                daySched.forEach(s => {
+                    badges += `<div class="text-[10px] bg-emerald-600/80 text-white rounded px-1 py-0.5 truncate flex items-center gap-1 mb-0.5" title="Prévu: ${s.title}">
+                        <i class="fa-solid fa-clock"></i> <span class="hidden sm:inline">${s.discipline}</span>
+                    </div>`;
+                });
+
+                cell.innerHTML = `
+                    <div class="text-xs font-semibold text-slate-400">${day}</div>
+                    <div class="overflow-y-auto max-h-16">${badges}</div>
+                `;
+                grid.appendChild(cell);
+            }
+
+            renderScheduledList();
+        }
+
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function quickAddScheduleForDate(dateStr) {
+            document.getElementById('sched-date').value = dateStr;
+            openScheduleModal();
+        }
+
+        function handleSaveSchedule(e) {
+            e.preventDefault();
+            const newSched = {
+                id: 's_' + Date.now(),
+                discipline: document.getElementById('sched-discipline').value,
+                date: document.getElementById('sched-date').value,
+                duration: parseInt(document.getElementById('sched-duration').value || 0),
+                title: document.getElementById('sched-title').value || 'Séance programmée',
+                completed: false
+            };
+            schedule.push(newSched);
+            saveState();
+            closeScheduleModal();
+            renderCalendar();
+        }
+
+        function renderScheduledList() {
+            const container = document.getElementById('scheduled-list');
+            container.innerHTML = '';
+
+            if (schedule.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500">Aucune séance programmée.</p>`;
+                return;
+            }
+
+            schedule.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(s => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-xs";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                            ${getDisciplineIcon(s.discipline)}
+                        </div>
+                        <div>
+                            <strong class="text-white block">${s.title} (${s.discipline})</strong>
+                            <span class="text-slate-400">${formatDate(s.date)} ${s.duration ? '• ' + s.duration + ' min' : ''}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="markScheduleDone('${s.id}')" class="px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 rounded-lg transition-colors">
+                            Valider comme faite
+                        </button>
+                        <button onclick="deleteSchedule('${s.id}')" class="text-slate-500 hover:text-rose-400">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function markScheduleDone(id) {
+            const item = schedule.find(s => s.id === id);
+            if (item) {
+                // Open workout form prefilled
+                openLogModal();
+                document.getElementById('form-discipline').value = item.discipline;
+                document.getElementById('form-date').value = item.date;
+                document.getElementById('form-duration').value = item.duration || 45;
+                document.getElementById('form-notes').value = item.title;
+                toggleDisciplineFields();
+
+                // Remove from schedule
+                deleteSchedule(id);
+            }
+        }
+
+        function deleteSchedule(id) {
+            schedule = schedule.filter(s => s.id !== id);
+            saveState();
+            renderCalendar();
+        }
+
+        // ================= WEIGHT TRACKER CONTROLLER =================
+        function renderWeightSection() {
+            document.getElementById('input-target-weight').value = targetWeight;
+            
+            const latestWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : 0;
+            document.getElementById('weight-last-value').innerText = `${latestWeight} kg`;
+            
+            const gap = (latestWeight - targetWeight).toFixed(1);
+            document.getElementById('weight-gap-value').innerText = `${gap > 0 ? '+' : ''}${gap} kg`;
+
+            // Table Render
+            const table = document.getElementById('weight-history-table');
+            table.innerHTML = '';
+
+            [...weightLogs].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(w => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-300 font-medium">${formatDate(w.date)}</td>
+                    <td class="p-3 text-white font-bold">${w.weight} kg</td>
+                    <td class="p-3 text-slate-400 text-xs">${w.note || '-'}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteWeight('${w.id}')" class="text-slate-500 hover:text-rose-400">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+
+            renderWeightChart();
+        }
+
+        function updateTargetWeight(e) {
+            e.preventDefault();
+            targetWeight = parseFloat(document.getElementById('input-target-weight').value);
+            saveState();
+            renderDashboard();
+            renderWeightSection();
+        }
+
+        function handleSaveWeight(e) {
+            e.preventDefault();
+            const newLog = {
+                id: 'w_' + Date.now(),
+                date: document.getElementById('weight-date').value,
+                weight: parseFloat(document.getElementById('weight-val').value),
+                note: document.getElementById('weight-note').value
+            };
+            weightLogs.push(newLog);
+            weightLogs.sort((a,b) => new Date(a.date) - new Date(b.date));
+            saveState();
+            closeWeightModal();
+            renderDashboard();
+            renderWeightSection();
+        }
+
+        function deleteWeight(id) {
+            weightLogs = weightLogs.filter(w => w.id !== id);
+            saveState();
+            renderDashboard();
+            renderWeightSection();
+        }
+
+        function renderWeightChart() {
+            const ctx = document.getElementById('weightChart');
+            if(!ctx) return;
+
+            const sorted = [...weightLogs].sort((a,b) => new Date(a.date) - new Date(a.date));
+            const labels = sorted.map(w => formatDate(w.date));
+            const data = sorted.map(w => w.weight);
+
+            if (weightChartInstance) weightChartInstance.destroy();
+
+            weightChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Poids (kg)',
+                        data: data,
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#a855f7'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ================= UTILITY & MODAL HELPERS =================
+        function getDisciplineIcon(disc) {
+            if (disc === 'Course') return '<i class="fa-solid fa-person-running text-blue-400"></i>';
+            if (disc === 'Natation') return '<i class="fa-solid fa-person-swimming text-cyan-400"></i>';
+            if (disc === 'Tennis') return '<i class="fa-solid fa-baseball text-amber-400"></i>';
+            if (disc === 'Pilates') return '<i class="fa-solid fa-spa text-pink-400"></i>';
+            if (disc === 'Musculation') return '<i class="fa-solid fa-dumbbell text-emerald-400"></i>';
+            return '<i class="fa-solid fa-bolt text-brand-500"></i>';
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        // Modal Open/Close Controls
+        function openLogModal() { document.getElementById('modal-workout').classList.remove('hidden'); }
+        function closeLogModal() { document.getElementById('modal-workout').classList.add('hidden'); }
+
+        function openScheduleModal() { document.getElementById('modal-schedule').classList.remove('hidden'); }
+        function closeScheduleModal() { document.getElementById('modal-schedule').classList.add('hidden'); }
+
+        function openWeightModal() { document.getElementById('modal-weight').classList.remove('hidden'); }
+        function closeWeightModal() { document.getElementById('modal-weight').classList.add('hidden'); }
+    </script>
+</body>
+</html>
